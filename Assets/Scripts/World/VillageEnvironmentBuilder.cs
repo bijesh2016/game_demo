@@ -1,4 +1,5 @@
 using UnityEngine;
+using HiddenNepal.NPC;
 
 namespace HiddenNepal.World
 {
@@ -46,25 +47,48 @@ namespace HiddenNepal.World
             // 2. Central Stupa / Chorten (Nepalese Shrine)
             CreateStupa(new Vector3(0f, 0f, 5f), villageContainer.transform);
 
-            // 3. Mani Wall (Stone Prayer Wall)
+            // 3. Pasang (Village Elder NPC) - Spawns in front of Stupa!
+            CreatePasangNPC(new Vector3(0f, 0f, 1f), villageContainer.transform);
+
+            // 4. Mani Wall (Stone Prayer Wall)
             CreateManiWall(new Vector3(0f, 0f, -15f), villageContainer.transform);
 
-            // 4. Trail Signpost
+            // 5. Trail Signpost
             CreateSignpost(new Vector3(5f, 0f, -14f), "➔ Waterfall & Cave", villageContainer.transform);
 
-            // 5. Mountain Trail & Rocks
+            // 6. Mountain Trail & Rocks
             CreateMountainTrail(villageContainer.transform);
 
-            // 6. Waterfall & Cliff Nook (North-East)
+            // 7. Waterfall & Cliff Nook (North-East)
             CreateWaterfallNook(new Vector3(25f, 0f, 35f), villageContainer.transform);
 
-            // 7. Cave Entrance (South-West)
+            // 8. Cave Entrance (South-West)
             CreateCaveEntrance(new Vector3(-30f, 0f, -30f), villageContainer.transform);
 
-            // 8. Surrounding Forest / Trees
+            // 9. Surrounding Forest / Trees
             CreateForestPerimeter(villageContainer.transform);
 
-            Debug.Log("🏔️ Sundari Gaun Village Environment built successfully!");
+            Debug.Log("🏔️ Sundari Gaun Village & NPC Pasang built successfully!");
+        }
+
+        private void CreatePasangNPC(Vector3 pos, Transform parent)
+        {
+            GameObject npcObj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            npcObj.name = "NPC_Pasang";
+            npcObj.transform.SetParent(parent);
+            npcObj.transform.position = pos + new Vector3(0f, 1f, 0f);
+            npcObj.transform.localScale = new Vector3(1f, 1f, 1f);
+
+            // Bright Maroon / Yellow Robes Material so he stands out clearly!
+            Material npcMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            npcMat.color = new Color(0.8f, 0.15f, 0.15f); // Robe Red
+            npcObj.GetComponent<Renderer>().sharedMaterial = npcMat;
+
+            // Attach NPCController automatically
+            if (npcObj.GetComponent<NPCController>() == null)
+            {
+                npcObj.AddComponent<NPCController>();
+            }
         }
 
         private void CreateMaterialsIfNeeded()
@@ -72,32 +96,32 @@ namespace HiddenNepal.World
             if (houseWallMat == null)
             {
                 houseWallMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                houseWallMat.color = new Color(0.72f, 0.52f, 0.38f); // Mud / Stone terracotta
+                houseWallMat.color = new Color(0.72f, 0.52f, 0.38f);
             }
             if (houseRoofMat == null)
             {
                 houseRoofMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                houseRoofMat.color = new Color(0.25f, 0.2f, 0.18f); // Slate / Wooden tile
+                houseRoofMat.color = new Color(0.25f, 0.2f, 0.18f);
             }
             if (stupaMat == null)
             {
                 stupaMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                stupaMat.color = new Color(0.95f, 0.95f, 0.92f); // White dome
+                stupaMat.color = new Color(0.95f, 0.95f, 0.92f);
             }
             if (waterMat == null)
             {
                 waterMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                waterMat.color = new Color(0.15f, 0.55f, 0.85f, 0.8f); // Glacial water blue
+                waterMat.color = new Color(0.15f, 0.55f, 0.85f, 0.8f);
             }
             if (rockMat == null)
             {
                 rockMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                rockMat.color = new Color(0.42f, 0.45f, 0.46f); // Himalayan slate rock
+                rockMat.color = new Color(0.42f, 0.45f, 0.46f);
             }
             if (woodMat == null)
             {
                 woodMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                woodMat.color = new Color(0.4f, 0.26f, 0.13f); // Timber wood
+                woodMat.color = new Color(0.4f, 0.26f, 0.13f);
             }
         }
 
@@ -107,7 +131,6 @@ namespace HiddenNepal.World
             houseObj.transform.SetParent(parent);
             houseObj.transform.position = pos;
 
-            // Main Walls
             GameObject body = GameObject.CreatePrimitive(PrimitiveType.Cube);
             body.name = "Walls";
             body.transform.SetParent(houseObj.transform);
@@ -115,7 +138,6 @@ namespace HiddenNepal.World
             body.transform.localScale = size;
             body.GetComponent<Renderer>().sharedMaterial = houseWallMat;
 
-            // Roof
             GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
             roof.name = "Roof";
             roof.transform.SetParent(houseObj.transform);
@@ -123,7 +145,6 @@ namespace HiddenNepal.World
             roof.transform.localScale = new Vector3(size.x + 1f, 0.8f, size.z + 1f);
             roof.GetComponent<Renderer>().sharedMaterial = houseRoofMat;
 
-            // Doorway
             GameObject door = GameObject.CreatePrimitive(PrimitiveType.Cube);
             door.name = "Door";
             door.transform.SetParent(houseObj.transform);
@@ -138,21 +159,18 @@ namespace HiddenNepal.World
             stupaObj.transform.SetParent(parent);
             stupaObj.transform.position = pos;
 
-            // Plinth (Base)
             GameObject baseBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
             baseBlock.transform.SetParent(stupaObj.transform);
             baseBlock.transform.localPosition = new Vector3(0f, 0.75f, 0f);
             baseBlock.transform.localScale = new Vector3(6f, 1.5f, 6f);
             baseBlock.GetComponent<Renderer>().sharedMaterial = rockMat;
 
-            // White Dome
             GameObject dome = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             dome.transform.SetParent(stupaObj.transform);
             dome.transform.localPosition = new Vector3(0f, 3f, 0f);
             dome.transform.localScale = new Vector3(4f, 3.5f, 4f);
             dome.GetComponent<Renderer>().sharedMaterial = stupaMat;
 
-            // Spire Top
             GameObject spire = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             spire.transform.SetParent(stupaObj.transform);
             spire.transform.localPosition = new Vector3(0f, 5.5f, 0f);
@@ -193,7 +211,6 @@ namespace HiddenNepal.World
             waterfallObj.transform.SetParent(parent);
             waterfallObj.transform.position = pos;
 
-            // Cliff Wall
             GameObject cliff = GameObject.CreatePrimitive(PrimitiveType.Cube);
             cliff.name = "Mountain_Cliff";
             cliff.transform.SetParent(waterfallObj.transform);
@@ -201,7 +218,6 @@ namespace HiddenNepal.World
             cliff.transform.localScale = new Vector3(20f, 20f, 6f);
             cliff.GetComponent<Renderer>().sharedMaterial = rockMat;
 
-            // Waterfall Water Column
             GameObject waterColumn = GameObject.CreatePrimitive(PrimitiveType.Cube);
             waterColumn.name = "Waterfall_Stream";
             waterColumn.transform.SetParent(waterfallObj.transform);
@@ -209,7 +225,6 @@ namespace HiddenNepal.World
             waterColumn.transform.localScale = new Vector3(4f, 18f, 0.4f);
             waterColumn.GetComponent<Renderer>().sharedMaterial = waterMat;
 
-            // Pool Basin
             GameObject pool = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             pool.name = "Waterfall_Pool";
             pool.transform.SetParent(waterfallObj.transform);
@@ -224,7 +239,6 @@ namespace HiddenNepal.World
             caveObj.transform.SetParent(parent);
             caveObj.transform.position = pos;
 
-            // Rock Arch
             GameObject archLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
             archLeft.transform.SetParent(caveObj.transform);
             archLeft.transform.localPosition = new Vector3(-3f, 4f, 0f);
@@ -249,7 +263,6 @@ namespace HiddenNepal.World
             GameObject trailObj = new GameObject("Trail_Path");
             trailObj.transform.SetParent(parent);
 
-            // Decorative path rocks along trail
             for (int i = 0; i < 15; i++)
             {
                 float z = -20f + (i * 4f);
@@ -268,7 +281,6 @@ namespace HiddenNepal.World
             GameObject forestObj = new GameObject("Village_Forest");
             forestObj.transform.SetParent(parent);
 
-            // Ring of pine tree proxies around village radius
             int treeCount = 28;
             float radius = 38f;
 
@@ -281,21 +293,19 @@ namespace HiddenNepal.World
                 tree.transform.SetParent(forestObj.transform);
                 tree.transform.position = treePos;
 
-                // Trunk
                 GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 trunk.transform.SetParent(tree.transform);
                 trunk.transform.localPosition = new Vector3(0f, 2.5f, 0f);
                 trunk.transform.localScale = new Vector3(0.8f, 2.5f, 0.8f);
                 trunk.GetComponent<Renderer>().sharedMaterial = woodMat;
 
-                // Foliage (Pine Cone shape)
                 GameObject foliage = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 foliage.transform.SetParent(tree.transform);
                 foliage.transform.localPosition = new Vector3(0f, 6f, 0f);
                 foliage.transform.localScale = new Vector3(4f, 3.5f, 4f);
 
                 Material leafMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                leafMat.color = new Color(0.12f, 0.35f, 0.18f); // Deep Himalayan Pine Green
+                leafMat.color = new Color(0.12f, 0.35f, 0.18f);
                 foliage.GetComponent<Renderer>().sharedMaterial = leafMat;
             }
         }
