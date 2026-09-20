@@ -1,5 +1,9 @@
 using UnityEngine;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 namespace HiddenNepal.Interaction
 {
     public class PlayerInteraction : MonoBehaviour
@@ -7,7 +11,6 @@ namespace HiddenNepal.Interaction
         [Header("Interaction Settings")]
         [SerializeField] private float interactRange = 3f;
         [SerializeField] private LayerMask interactableMask = ~0;
-        [SerializeField] private KeyCode interactKey = KeyCode.E;
 
         private IInteractable currentInteractable;
 
@@ -15,7 +18,18 @@ namespace HiddenNepal.Interaction
         {
             DetectInteractable();
 
-            if (currentInteractable != null && Input.GetKeyDown(interactKey))
+            bool interactPressed = false;
+
+#if ENABLE_INPUT_SYSTEM
+            if (Keyboard.current != null)
+            {
+                interactPressed = Keyboard.current.eKey.wasPressedThisFrame;
+            }
+#else
+            interactPressed = Input.GetKeyDown(KeyCode.E);
+#endif
+
+            if (currentInteractable != null && interactPressed)
             {
                 currentInteractable.Interact(gameObject);
             }
@@ -35,7 +49,6 @@ namespace HiddenNepal.Interaction
                 }
             }
 
-            // Fallback sphere overlap near player forward position
             Collider[] colliders = Physics.OverlapSphere(transform.position + transform.forward * 1f, 1.5f, interactableMask);
             foreach (var col in colliders)
             {

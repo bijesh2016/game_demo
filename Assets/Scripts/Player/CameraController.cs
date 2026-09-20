@@ -1,5 +1,9 @@
 using UnityEngine;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 namespace HiddenNepal.Player
 {
     public class CameraController : MonoBehaviour
@@ -12,8 +16,8 @@ namespace HiddenNepal.Player
         [SerializeField] private float distance = 5f;
         [SerializeField] private float minDistance = 2f;
         [SerializeField] private float maxDistance = 10f;
-        [SerializeField] private float sensitivityX = 3f;
-        [SerializeField] private float sensitivityY = 2f;
+        [SerializeField] private float sensitivityX = 0.15f;
+        [SerializeField] private float sensitivityY = 0.15f;
         [SerializeField] private float minPitch = -20f;
         [SerializeField] private float maxPitch = 70f;
 
@@ -34,21 +38,34 @@ namespace HiddenNepal.Player
         {
             if (target == null) return;
 
-            // Mouse Look Input
-            currentX += Input.GetAxis("Mouse X") * sensitivityX * 100f * Time.deltaTime;
-            currentY -= Input.GetAxis("Mouse Y") * sensitivityY * 100f * Time.deltaTime;
+            float mouseX = 0f;
+            float mouseY = 0f;
+            float scrollDelta = 0f;
+
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current != null)
+            {
+                Vector2 delta = Mouse.current.delta.ReadValue();
+                mouseX = delta.x * sensitivityX;
+                mouseY = delta.y * sensitivityY;
+                scrollDelta = Mouse.current.scroll.ReadValue().y * 0.001f;
+            }
+#else
+            mouseX = Input.GetAxis("Mouse X") * sensitivityX * 20f;
+            mouseY = Input.GetAxis("Mouse Y") * sensitivityY * 20f;
+            scrollDelta = Input.GetAxis("Mouse ScrollWheel");
+#endif
+
+            currentX += mouseX;
+            currentY -= mouseY;
             currentY = Mathf.Clamp(currentY, minPitch, maxPitch);
 
-            // Scroll Zoom
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            distance = Mathf.Clamp(distance - scroll * 4f, minDistance, maxDistance);
+            distance = Mathf.Clamp(distance - scrollDelta * 4f, minDistance, maxDistance);
 
-            // Calculate Rotation & Target Position
             Quaternion rotation = Quaternion.Euler(currentY, currentX, 0f);
             Vector3 focusPoint = target.position + targetOffset;
             Vector3 desiredPosition = focusPoint - (rotation * Vector3.forward * distance);
 
-            // Collision Check
             float currentDistance = distance;
             if (Physics.SphereCast(focusPoint, cameraRadius, (desiredPosition - focusPoint).normalized, out RaycastHit hit, distance, collisionLayers))
             {

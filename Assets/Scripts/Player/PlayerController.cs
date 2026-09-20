@@ -1,5 +1,9 @@
 using UnityEngine;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 namespace HiddenNepal.Player
 {
     [RequireComponent(typeof(CharacterController))]
@@ -53,28 +57,48 @@ namespace HiddenNepal.Player
             }
             else
             {
-                // Fallback to CharacterController's built-in ground check
                 isGrounded = controller.isGrounded;
             }
 
             if (isGrounded && velocity.y < 0)
             {
-                velocity.y = -2f; // Slight downward force to stay glued to slope/ground
+                velocity.y = -2f;
             }
         }
 
         private void HandleMovement()
         {
-            float horizontal = Input.GetAxisRaw("Horizontal");
-            float vertical = Input.GetAxisRaw("Vertical");
-            Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+            float horizontal = 0f;
+            float vertical = 0f;
+            bool isSprinting = false;
 
-            bool isSprinting = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+#if ENABLE_INPUT_SYSTEM
+            if (Keyboard.current != null)
+            {
+                if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) vertical += 1f;
+                if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) vertical -= 1f;
+                if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) horizontal += 1f;
+                if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) horizontal -= 1f;
+
+                isSprinting = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
+            }
+#else
+            horizontal = Input.GetAxisRaw("Horizontal");
+            vertical = Input.GetAxisRaw("Vertical");
+            isSprinting = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+#endif
+
+            Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
             float targetSpeed = isSprinting ? runSpeed : walkSpeed;
 
             if (direction.magnitude >= 0.1f)
             {
-                float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cameraTransform.eulerAngles.y;
+                float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+                if (cameraTransform != null)
+                {
+                    targetAngle += cameraTransform.eulerAngles.y;
+                }
+
                 float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
                 transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
@@ -91,7 +115,18 @@ namespace HiddenNepal.Player
 
         private void HandleJumpAndGravity()
         {
-            if (Input.GetButtonDown("Jump") && isGrounded)
+            bool jumpPressed = false;
+
+#if ENABLE_INPUT_SYSTEM
+            if (Keyboard.current != null)
+            {
+                jumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
+            }
+#else
+            jumpPressed = Input.GetButtonDown("Jump");
+#endif
+
+            if (jumpPressed && isGrounded)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
