@@ -1,5 +1,8 @@
 using UnityEngine;
 using HiddenNepal.NPC;
+using HiddenNepal.Quest;
+using HiddenNepal.Photography;
+using HiddenNepal.SaveSystem;
 
 namespace HiddenNepal.World
 {
@@ -27,7 +30,6 @@ namespace HiddenNepal.World
         [ContextMenu("Build Sundari Gaun Village")]
         public void BuildSundariGaun()
         {
-            // Clear previous generated environment under this object
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 DestroyImmediate(transform.GetChild(i).gameObject);
@@ -38,37 +40,69 @@ namespace HiddenNepal.World
             GameObject villageContainer = new GameObject("Sundari_Gaun_Village");
             villageContainer.transform.SetParent(transform);
 
-            // 1. Village Houses (Sundari Gaun Homes)
+            // Setup Managers
+            SetupQuestAndCamera(villageContainer.transform);
+
+            // 1. Village Houses
             CreateHouse(new Vector3(-12f, 0f, 10f), new Vector3(6f, 4f, 8f), "Gurung_House_1", villageContainer.transform);
             CreateHouse(new Vector3(12f, 0f, 12f), new Vector3(7f, 4.5f, 9f), "Sherpa_House_2", villageContainer.transform);
             CreateHouse(new Vector3(-14f, 0f, -8f), new Vector3(8f, 5f, 7f), "Village_Lodge", villageContainer.transform);
             CreateHouse(new Vector3(10f, 0f, -10f), new Vector3(6f, 4f, 6f), "Tea_House", villageContainer.transform);
 
-            // 2. Central Stupa / Chorten (Nepalese Shrine)
+            // 2. Central Stupa / Chorten
             CreateStupa(new Vector3(0f, 0f, 5f), villageContainer.transform);
 
-            // 3. Pasang (Village Elder NPC) - Spawns in front of Stupa!
+            // 3. Pasang NPC
             CreatePasangNPC(new Vector3(0f, 0f, 1f), villageContainer.transform);
 
-            // 4. Mani Wall (Stone Prayer Wall)
+            // 4. Mani Wall
             CreateManiWall(new Vector3(0f, 0f, -15f), villageContainer.transform);
 
             // 5. Trail Signpost
             CreateSignpost(new Vector3(5f, 0f, -14f), "➔ Waterfall & Cave", villageContainer.transform);
 
-            // 6. Mountain Trail & Rocks
+            // 6. Mountain Trail
             CreateMountainTrail(villageContainer.transform);
 
-            // 7. Waterfall & Cliff Nook (North-East)
+            // 7. Waterfall Nook & Discovery Zone
             CreateWaterfallNook(new Vector3(25f, 0f, 35f), villageContainer.transform);
 
-            // 8. Cave Entrance (South-West)
+            // 8. Cave Entrance
             CreateCaveEntrance(new Vector3(-30f, 0f, -30f), villageContainer.transform);
 
-            // 9. Surrounding Forest / Trees
+            // 9. Forest Perimeter
             CreateForestPerimeter(villageContainer.transform);
 
-            Debug.Log("🏔️ Sundari Gaun Village & NPC Pasang built successfully!");
+            Debug.Log("🏔️ Sundari Gaun Village, Quests, Photography & Waterfall Discovery loaded!");
+        }
+
+        private void SetupQuestAndCamera(Transform parent)
+        {
+            if (FindObjectOfType<QuestManager>() == null)
+            {
+                GameObject questObj = new GameObject("QuestManager");
+                questObj.transform.SetParent(parent);
+                questObj.AddComponent<QuestManager>();
+            }
+
+            if (FindObjectOfType<SaveManager>() == null)
+            {
+                GameObject saveObj = new GameObject("SaveManager");
+                saveObj.transform.SetParent(parent);
+                saveObj.AddComponent<SaveManager>();
+            }
+
+            GameObject player = GameObject.FindWithTag("Player");
+            if (player == null)
+            {
+                var pc = FindObjectOfType<HiddenNepal.Player.PlayerController>();
+                if (pc != null) player = pc.gameObject;
+            }
+
+            if (player != null && player.GetComponent<CameraPhotography>() == null)
+            {
+                player.AddComponent<CameraPhotography>();
+            }
         }
 
         private void CreatePasangNPC(Vector3 pos, Transform parent)
@@ -77,14 +111,11 @@ namespace HiddenNepal.World
             npcObj.name = "NPC_Pasang";
             npcObj.transform.SetParent(parent);
             npcObj.transform.position = pos + new Vector3(0f, 1f, 0f);
-            npcObj.transform.localScale = new Vector3(1f, 1f, 1f);
 
-            // Bright Maroon / Yellow Robes Material so he stands out clearly!
             Material npcMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            npcMat.color = new Color(0.8f, 0.15f, 0.15f); // Robe Red
+            npcMat.color = new Color(0.8f, 0.15f, 0.15f);
             npcObj.GetComponent<Renderer>().sharedMaterial = npcMat;
 
-            // Attach NPCController automatically
             if (npcObj.GetComponent<NPCController>() == null)
             {
                 npcObj.AddComponent<NPCController>();
@@ -231,6 +262,15 @@ namespace HiddenNepal.World
             pool.transform.localPosition = new Vector3(0f, 0.1f, -8f);
             pool.transform.localScale = new Vector3(12f, 0.2f, 12f);
             pool.GetComponent<Renderer>().sharedMaterial = waterMat;
+
+            // Trigger Zone for Discovery
+            GameObject triggerObj = new GameObject("Waterfall_Discovery_Trigger");
+            triggerObj.transform.SetParent(waterfallObj.transform);
+            triggerObj.transform.localPosition = new Vector3(0f, 1f, -8f);
+            BoxCollider col = triggerObj.AddComponent<BoxCollider>();
+            col.isTrigger = true;
+            col.size = new Vector3(15f, 6f, 15f);
+            triggerObj.AddComponent<DiscoveryZone>();
         }
 
         private void CreateCaveEntrance(Vector3 pos, Transform parent)
