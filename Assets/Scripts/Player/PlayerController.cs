@@ -10,10 +10,10 @@ namespace HiddenNepal.Player
     public class PlayerController : MonoBehaviour
     {
         [Header("Movement Settings")]
-        [SerializeField] private float walkSpeed = 5f;
-        [SerializeField] private float runSpeed = 8.5f;
+        [SerializeField] private float walkSpeed = 4f;
+        [SerializeField] private float runSpeed = 11f;
         [SerializeField] private float turnSmoothTime = 0.1f;
-        [SerializeField] private float jumpHeight = 1.2f;
+        [SerializeField] private float jumpHeight = 1.5f;
         [SerializeField] private float gravity = -19.62f;
 
         [Header("Ground Check")]
@@ -31,6 +31,7 @@ namespace HiddenNepal.Player
         private float turnSmoothVelocity;
 
         public bool IsGrounded => isGrounded;
+        public bool IsSprinting { get; private set; }
         public float CurrentSpeed { get; private set; }
 
         private void Awake()
@@ -70,7 +71,7 @@ namespace HiddenNepal.Player
         {
             float horizontal = 0f;
             float vertical = 0f;
-            bool isSprinting = false;
+            bool shiftPressed = false;
 
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
@@ -80,16 +81,17 @@ namespace HiddenNepal.Player
                 if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) horizontal += 1f;
                 if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) horizontal -= 1f;
 
-                isSprinting = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
+                shiftPressed = Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed;
             }
 #else
             horizontal = Input.GetAxisRaw("Horizontal");
             vertical = Input.GetAxisRaw("Vertical");
-            isSprinting = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            shiftPressed = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 #endif
 
             Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
-            float targetSpeed = isSprinting ? runSpeed : walkSpeed;
+            IsSprinting = shiftPressed && direction.magnitude > 0.1f;
+            float targetSpeed = IsSprinting ? runSpeed : walkSpeed;
 
             if (direction.magnitude >= 0.1f)
             {
